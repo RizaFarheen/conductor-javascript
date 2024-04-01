@@ -107,7 +107,7 @@ To Do
 ```
 
 > [!note]
-> To use the Conductor API, the Conductor server must be up and running ([see Running over Conductor standalone (installed locally](#running-over-conductor-standalone-installed-locally)).
+> To use the Conductor API, the Conductor server must be up and running ([see Running over Conductor standalone (installed locally)](#running-over-conductor-standalone-installed-locally)).
 
 ### Step 2: Write Task Worker
 
