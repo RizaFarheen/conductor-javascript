@@ -197,7 +197,7 @@ export CONDUCTOR_AUTH_SECRET=your_key_secret
 
 Run the application and view the execution status from Conductor's UI Console.
 
-[!note]
+>[!note]
 > That's it - you just created and executed your first distributed Javascript app!
 
 ## Learn More about Conductor Javascript/Typescript SDK
