@@ -1,6 +1,6 @@
 # Using Conductor in Your Application
 
-Conductor SDKs are lightweight and can easily be added to your existing or new Javscript app. This section will dive deeper into integrating Conductor in your application.
+Conductor SDKs are lightweight and can easily be added to your existing or new Javascript app. This section will dive deeper into integrating Conductor in your application.
 
 ## Content
 
