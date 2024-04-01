@@ -17,7 +17,6 @@ Show support for the Conductor OSS.  Please help spread the awareness by starrin
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 - [Install Conductor Javascript SDK](#install-conductor-javascript-sdk)
   - [Get Conductor Javascript SDK](#get-conductor-javascript-sdk)
@@ -212,4 +211,4 @@ There are three main ways you can use Conductor when building durable, resilient
 
 ### [Create Conductor Workflows](workflow_sdk.md)
 
-### Using Conductor in your Application
+### [Using Conductor in your Application](conductor_apps.md)
