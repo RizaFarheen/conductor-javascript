@@ -107,13 +107,13 @@ To Do
 ```
 
 > [!note]
-> To use the Conductor API, the Conductor server must be up and running ([see Running over Conductor standalone (installed locally]((#running-over-conductor-standalone-installed-locally))).
+> To use the Conductor API, the Conductor server must be up and running ([see Running over Conductor standalone (installed locally](#running-over-conductor-standalone-installed-locally)).
 
 ### Step 2: Write Task Worker
 
 Using Javascript, a worker represents a function with the `worker_task` decorator. Create [greetings_worker.js] file as illustrated below:
 
-[!note]
+>[!note]
 > A single workflow can have task workers written in different languages and deployed anywhere, making your workflow polyglot and distributed!
 
 ```javascript
