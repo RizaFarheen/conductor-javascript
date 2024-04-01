@@ -20,7 +20,7 @@ Show support for the Conductor OSS.  Please help spread the awareness by starrin
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 - [Install Conductor Javascript SDK](#install-conductor-javascript-sdk)
-  - [Get Conductor Python SDK](#get-conductor-python-sdk)
+  - [Get Conductor Javascript SDK](#get-conductor-javascript-sdk)
     - [NPM](#npm)
     - [YARN](#yarn)
 - [Hello World Application Using Conductor](#hello-world-application-using-conductor)
@@ -41,13 +41,10 @@ Show support for the Conductor OSS.  Please help spread the awareness by starrin
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
    
 ## Install Conductor Javascript SDK
 
-### Get Conductor Python SDK
+### Get Conductor Javascript SDK
 
 #### NPM
 
