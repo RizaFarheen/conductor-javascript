@@ -1,174 +1,166 @@
-# Writing Workers with the Javascript SDK
+# Writing Workers 
 
-A worker is responsible for executing a task.
-Operator and System tasks are handled by the Conductor server, while user defined tasks needs to have a worker created that awaits the work to be scheduled by the server for it to be executed.
+A Workflow task represents a unit of business logic that achieves a specific goal, such as checking inventory, initiating payment transfer, etc. A worker implements a task in the workflow.
 
-Worker framework provides features such as polling threads, metrics and server communication.
+## Content
 
-### Design Principles for Workers
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-Each worker embodies design pattern and follows certain basic principles:
+## Implementing Workers
 
-1. Workers are stateless and do not implement a workflow specific logic.
-2. Each worker executes a very specific task and produces well-defined output given specific inputs.
-3. Workers are meant to be idempotent (or should handle cases where the task that is partially executed gets rescheduled due to timeouts etc.)
-4. Workers do not implement the logic to handle retries etc, that is taken care by the Conductor server.
+The workers can be implemented by writing a simple Javascript function and annotating the function with the `@worker_task`. Conductor workers are services (similar to microservices) that follow the [Single Responsibility Principle](https://en.wikipedia.org/wiki/Single_responsibility_principle).
 
-### Creating Task Workers
+Workers can be hosted along with the workflow or run in a distributed environment where a single workflow uses workers deployed and running in different machines/VMs/containers. Whether to keep all the workers in the same application or run them as a distributed application is a design and architectural choice. Conductor is well suited for both kinds of scenarios.
 
-Task worker is implemented using a function that confirms to the following function
+You can create or convert any existing Javascript function to a distributed worker by adding `@worker_task` annotation to it. Here is a simple worker that takes `name` as input and returns greetings:
 
-```typescript
-import { ConductorWorker, Task } from "@io-orkes/conductor-javascript";
-
-const worker: ConductorWorker = {
-  taskDefName: "task-def-name",
-  execute: async (
-    task: Task
-  ): Promise<Omit<TaskResult, "workflowInstanceId" | "taskId">> => {},
-};
+```javascript
+To Do
 ```
 
-Worker returns a object as the output of the task execution. The object is just a json that follows the TaskResult interface.
-If an `error` is returned, the task is marked as `FAILED`
+A worker can take inputs which are primitives - `str`, `int`, `float`, `bool` etc. or can be complex data classes.
 
-#### Task worker that returns an object
+Here is an example worker that uses `dataclass` as part of the worker input.
 
-```typescript
-import { ConductorWorker, Task } from "@io-orkes/conductor-javascript";
-
-const worker: ConductorWorker = {
-  taskDefName: "task-def-name",
-  execute: async (task: Task) => {
-    // Sample output
-    return {
-      outputData: {
-        hello: "From your worker",
-      },
-      status: "COMPLETED",
-    };
-  },
-};
+```javascript
+To Do
 ```
 
-#### Controlling execution for long-running tasks
+### Managing Workers in Application
 
-For the long-running tasks you might want to spawn another process/routine and update the status of the task at a later point and complete the
-execution function without actually marking the task as `COMPLETED`. Use `TaskResult` Interface that allows you to specify more fined grained control.
+Workers use a polling mechanism (with a long poll) to check for any available tasks from the server periodically. The startup and shutdown of workers are handled by the `conductor.client.automator.task_handler.TaskHandler` class.
 
-Here is an example of a task execution function that returns with `IN_PROGRESS` status asking server to push the task again in 60 seconds.
-
-```typescript
-const worker: ConductorWorker = {
-  taskDefName: "task-def-name",
-  execute: async (task: Task) => {
-    // Sample output
-    return {
-      outputData: {},
-      status: "IN_PROGRESS",
-      callbackAfterSeconds: 60,
-    };
-  },
-  pollInterval: 100, // optional
-  concurrency: 2, // optional
-};
+```javascript
+To Do
 ```
 
-## Starting Workers
+## Design Principles for Workers
 
-`TaskRunner` interface is used to start the workers, which takes care of polling server for the work, executing worker code and updating the results back to the server.
+Each worker embodies the design pattern and follows certain basic principles:
 
-```typescript
-import {
-  OrkesApiConfig,
-  orkesConductorClient,
-  TaskRunner,
-} from "@io-orkes/conductor-javascript";
+1. Workers are stateless and do not implement a workflow-specific logic.
+2. Each worker executes a particular task and produces well-defined output given specific inputs.
+3. Workers are meant to be idempotent (Should handle cases where the partially executed task, due to timeouts, etc, gets rescheduled).
+4. Workers do not implement the logic to handle retries, etc., that is taken care of by the Conductor server.
 
-const clientPromise = orkesConductorClient({
-  keyId: "XXX", // optional
-  keySecret: "XXXX", // optional
-  serverUrl: "https://play.orkes.io/api",
-});
+## System Task Workers
 
-const client = await clientPromise;
+A system task worker is a pre-built, general-purpose worker in your Conductor server distribution.
 
-const taskDefName = "HelloWorldWorker";
+System tasks automate repeated tasks such as calling an HTTP endpoint, executing lightweight ECMA-compliant javascript code, publishing to an event broker, etc.
 
-const customWorker: ConductorWorker = {
-taskDefName,
-  execute: async ({ inputData, taskId }) => {
-    return {
-      outputData: {
-        greeting: "Hello World",
-      },
-      status: "COMPLETED",
-    };
-  },
-};
-// Worker Options will take precedence over options defined in the manager
+### Wait Task
 
-const manager = new TaskManager(client, [customWorker], {
-  options: { pollInterval: 100, concurrency: 1 },
-});
+>[!tip]
+> Wait is a powerful way to have your system wait for a specific trigger, such as an external event, a particular date/time, or duration, such as 2 hours, without having to manage threads, background processes, or jobs.
 
-manager.startPolling();
-// You can update all worker settings at once using
-manager.updatePollingOptions({ pollInterval: 100, concurrency: 1 });
+#### Using Code to Create Wait Task
 
-// You can update a single worker setting using :
-manager.updatePollingOptionForWorker(taskDefName, {
-  pollInterval: 100,
-  concurrency: 1,
-});
-
-manager.isPolling // Will resolve to true
-
-await manager.stopPolling();
-
-manager.isPolling // Will resolve to false
-
+```javascript
+To Do
 ```
 
-## Task Management APIs
+#### JSON Configuration
 
-### Get Task Details
-
-```typescript
-import {
-  WorkflowExecutor,
-  TaskResultStatus,
-} from "@io-orkes/conductor-javascript";
-
-const clientPromise = orkesConductorClient({
-  keyId: "XXX", // optional
-  keySecret: "XXXX", // optional
-  serverUrl: "https://play.orkes.io/api",
-});
-
-const client = await clientPromise;
-const executor = new WorkflowExecutor(client);
-
-const taskDetails = await executor.getTask(someTaskId);
+```json
+{
+  "name": "wait",
+  "taskReferenceName": "wait_till_jan_end",
+  "type": "WAIT",
+  "inputParameters": {
+    "until": "2024-01-31 00:00 UTC"
+  }
+}
 ```
 
-### Updating the Task result outside the worker implementation
+### HTTP Task
 
-#### Update task by Reference Name
+Make a request to an HTTP(S) endpoint. The task allows for GET, PUT, POST, DELETE, HEAD, and PATCH requests.
 
-```typescript
-executor.updateTaskByRefName(
-  taskReferenceName,
-  workflowInstanceId,
-  "COMPLETED",
-  { some: { output: "value" } }
-);
+#### Using Code to Create HTTP Task
+
+```javascript
+To Do
 ```
 
-#### Update task by id
+#### JSON Configuration
 
-```typescript
-await executor.updateTask(taskId, executionId, "COMPLETED", newChange);
+```json
+{
+  "name": "http_task",
+  "taskReferenceName": "http_task_ref",
+  "type" : "HTTP",
+  "uri": "https://orkes-api-tester.orkesconductor.com/api",
+  "method": "GET"
+}
 ```
 
-### Next: [Create and Execute Workflows](workflow_sdk.md)
+### Javascript Executor Task
+
+Execute ECMA-compliant Javascript code. It is useful when writing a script for data mapping, calculations, etc.
+
+#### Using Code to Create Inline Task
+
+```javascript
+To Do 
+```
+
+#### JSON Configuration
+
+```json
+{
+  "name": "inline_task",
+  "taskReferenceName": "inline_task_ref",
+  "type": "INLINE",
+  "inputParameters": {
+    "expression": " function greetings() {\n  return {\n            \"text\": \"hello \" + $.name\n        }\n    }\n    greetings();",
+    "evaluatorType": "graaljs",
+    "name": "${workflow.input.name}"
+  }
+}
+```
+
+### JSON Processing using JQ
+
+[Jq](https://jqlang.github.io/jq/) is like sed for JSON data - you can slice, filter, map, and transform structured data with the same ease that sed, awk, grep, and friends let you play with text.
+
+#### Using Code to Create JSON JQ Transform Task
+
+```javascript
+To Do
+```
+
+#### JSON Configuration
+
+```json
+{
+  "name": "json_transform_task",
+  "taskReferenceName": "json_transform_task_ref",
+  "type": "JSON_JQ_TRANSFORM",
+  "inputParameters": {
+    "key1": "k1",        
+    "key2": "k2",
+    "queryExpression": "{ key3: (.key1.value1 + .key2.value2) }",
+  }
+}
+```
+
+## Worker vs. Microservice/HTTP Endpoints
+
+>[!note]
+> Workers are a lightweight alternative to exposing an HTTP endpoint and orchestrating using HTTP tasks. Using workers is a recommended approach if you do not need to expose the service over HTTP or gRPC endpoints.
+
+There are several advantages to this approach:
+
+1. **No need for an API management layer** : Given there are no exposed endpoints and workers are self-load-balancing.
+2. **Reduced infrastructure footprint** : No need for an API gateway/load balancer.
+3. All the communication is initiated by workers using polling - avoiding the need to open up any incoming TCP ports.
+4. Workers **self-regulate** when busy; they only poll as much as they can handle. Backpressure handling is done out of the box.
+5. Workers can be scaled up/down quickly based on the demand by increasing the number of processes.
+
+## Deploying Workers in Production
+
+Conductor workers can run in the cloud-native environment or on-prem and can easily be deployed like any other Javascript application. Workers can run a containerized environment, VMs, or bare metal like you would deploy your other Javascript applications.
+
