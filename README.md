@@ -166,7 +166,7 @@ Let's add [helloworld.js] with a `main` method:
 const { createAndRegisterWorkflow} = require("./workflow/greetings_workflow")
 const { greetings } = require("./worker/greetings_worker")
 const { orkesConductorClient,  WorkflowExecutor, TaskManager } = require("@io-orkes/conductor-javascript");
-const workflow_name = "Greetings_Workflow";
+const workflow_name = "greetings";
 const uuid = require('uuid');
 
 const serverSettings = {
