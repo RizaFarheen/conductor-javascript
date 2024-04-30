@@ -69,10 +69,29 @@ In this section, we will create a simple "Hello World" application that executes
 
 #### Creating Workflows by Code
 
-Create [greetings_workflow.js] with the following:
+Create [workflow/greetings_workflow.js] with the following:
 
 ```javascript
-To Do
+const {
+  simpleTask,
+  workflow
+} = require("@io-orkes/conductor-javascript")
+
+async function createAndRegisterWorkflow(client, workflow_name) {
+  const greetingsTask = simpleTask("greetings", "greetings", {
+    name: "${workflow.input.name}",
+  });
+  const wf = workflow(workflow_name, [
+    greetingsTask
+  ]);
+  wf.inputParameters = ['name']
+  client.metadataResource.create(wf, true);
+  return wf;
+}
+
+module.exports = {
+  createAndRegisterWorkflow: createAndRegisterWorkflow
+}
 ```
 
 #### (Alternatively) Creating Workflows in JSON
@@ -110,13 +129,30 @@ To Do
 
 ### Step 2: Write Task Worker
 
-Using Javascript, a worker represents a function with the `worker_task` decorator. Create [greetings_worker.js] file as illustrated below:
+Using Javascript, a worker represents a function with the `worker_task` decorator. Create [workers/greetings_worker.js] file as illustrated below:
 
 >[!note]
 > A single workflow can have task workers written in different languages and deployed anywhere, making your workflow polyglot and distributed!
 
 ```javascript
-To Do
+const greetings = () => {
+  return {
+    taskDefName: "greetings",
+    execute: async ({ inputData }) => {
+      const name = inputData?.name;
+      return {
+        outputData: {
+          result: "Hello "+ name,
+        },
+        status: "COMPLETED",
+      };
+    },
+  };
+};
+
+module.exports = {
+  greetings: greetings
+}
 ```
 
 Now, we are ready to write our main application, which will execute our workflow.
@@ -126,7 +162,55 @@ Now, we are ready to write our main application, which will execute our workflow
 Let's add [helloworld.js] with a `main` method:
 
 ```javascript
-To Do
+const { createAndRegisterWorkflow} = require("./workflow/greetings_workflow")
+const { greetings } = require("./worker/greetings_worker")
+const { orkesConductorClient,  WorkflowExecutor, TaskManager } = require("@io-orkes/conductor-javascript");
+const workflow_name = "Greetings_Workflow";
+const uuid = require('uuid');
+
+const serverSettings = {
+    keyId: process.env.KEY,
+    keySecret: process.env.SECRET,
+    serverUrl: process.env.CONDUCTOR_SERVER_URL,
+};
+
+async function main() {
+    const clientPromise = await orkesConductorClient(serverSettings);
+    //This is a one-time process, this line can be commented after
+    const wf = await createAndRegisterWorkflow(clientPromise, workflow_name);
+    const taskManager = new TaskManager(clientPromise, [
+        greetings()
+    ], { logger: console, options: { concurrency: 5, pollInterval: 100 } });
+    taskManager.startPolling();
+    await run_workflow(clientPromise);
+    await taskManager.stopPolling();
+    process.exit(0);
+}
+
+async function run_workflow(client) {
+    const workflowExecutor = new WorkflowExecutor(client);
+    const workflowRun = await workflowExecutor.executeWorkflow(
+        {
+            name: workflow_name,
+            version: 1,
+            input: {
+                name: "Orkes",
+            },
+        },
+        workflow_name,
+        1,
+        uuid.v4(),
+    )
+    if (workflowRun.status != 'COMPLETED') {
+        throw new Error(`workflow not completed, workflowId: ${workflowRun.workflowId}`);
+    }
+    console.log(`Workflow Output: ${workflowRun.output}`);
+    const baseUrl = `${process.env.CONDUCTOR_SERVER_URL}`;
+    const execUrl = `${baseUrl.substring(0, baseUrl.length - 4)}/execution/${workflowRun.workflowId}`;
+    console.log(execUrl);
+}
+
+main()
 ```
 
 ## Running Workflows on Conductor Standalone (Installed Locally)
@@ -154,22 +238,12 @@ To ensure the server has started successfully, open Conductor UI on http://local
 To run the application, type the following command:
 
 ```javascript
-To Do
+node src/helloworld.js
 ```
 
 Now, the workflow is executed, and its execution status can be viewed from Conductor UI (http://localhost:5000).
 
 Navigate to the **Executions** tab to view the workflow execution.
-
-Open the Workbench tab and try running the 'greetings' workflow. You will notice that the workflow execution fails. This is because the task_handler.stop_processes() [helloworld.js] function is called and stops all workers included in the app, and therefore, there is no worker up and running to execute the tasks.
-
-Now, let's update the app [helloworld.js]
-
-```javascript
-To Do
-```
-
-By commenting the lines that execute the workflow and stop the task polling mechanism, we can re-run the app and run the workflow from the Conductor UI. The task is executed successfully.
 
 ## Running Workflows on Orkes Conductor
 
