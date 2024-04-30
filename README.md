@@ -77,12 +77,12 @@ const {
   workflow
 } = require("@io-orkes/conductor-javascript")
 
-async function createAndRegisterWorkflow(client, workflow_name) {
-  const greetingsTask = simpleTask("greetings", "greetings", {
+async function greetingsWorkflow(client) {
+  const greetTask = simpleTask("greet", "greet_ref", {
     name: "${workflow.input.name}",
   });
-  const wf = workflow(workflow_name, [
-    greetingsTask
+  const wf = workflow("greetings", [
+    greetTask
   ]);
   wf.inputParameters = ['name']
   client.metadataResource.create(wf, true);
@@ -90,7 +90,7 @@ async function createAndRegisterWorkflow(client, workflow_name) {
 }
 
 module.exports = {
-  createAndRegisterWorkflow: createAndRegisterWorkflow
+  greetingsWorkflow: greetingsWorkflow
 }
 ```
 
@@ -121,7 +121,8 @@ Create **greetings_workflow.json** with the following:
 Workflows must be registered to the Conductor server. Use the API to register the greetings workflow from the JSON file above:
 
 ```shell
-To Do
+curl -X POST -H "Content-Type:application/json" \
+http://localhost:8080/api/metadata/workflow -d @greetings_workflow.json
 ```
 
 > [!note]
@@ -135,9 +136,9 @@ Using Javascript, a worker represents a function with the `worker_task` decorato
 > A single workflow can have task workers written in different languages and deployed anywhere, making your workflow polyglot and distributed!
 
 ```javascript
-const greetings = () => {
+const greet = () => {
   return {
-    taskDefName: "greetings",
+    taskDefName: "greet",
     execute: async ({ inputData }) => {
       const name = inputData?.name;
       return {
@@ -151,7 +152,7 @@ const greetings = () => {
 };
 
 module.exports = {
-  greetings: greetings
+  greet: greet
 }
 ```
 
@@ -179,7 +180,7 @@ async function main() {
     //This is a one-time process, this line can be commented after
     const wf = await createAndRegisterWorkflow(clientPromise, workflow_name);
     const taskManager = new TaskManager(clientPromise, [
-        greetings()
+        greet()
     ], { logger: console, options: { concurrency: 5, pollInterval: 100 } });
     taskManager.startPolling();
     await run_workflow(clientPromise);
